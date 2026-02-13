@@ -136,7 +136,9 @@ function initGame() {
             } else {
                 c1 = colors[Math.floor(Math.random() * 4)];
                 do { c2 = colors[Math.floor(Math.random() * 4)]; } while (c2 === c1);
-                sounds.pop.play().catch(() => {});
+                //sounds.pop.play().catch(() => {});
+                sounds[c1].play().catch(() => {}); 
+                sounds[c2].play().catch(() => {}); 
             }
             
             document.getElementById('left').style.backgroundColor = c1;
@@ -150,7 +152,11 @@ function initGame() {
             if (nextIdx >= levels.length) {
                 triggerVictory();
             } else {
-                sounds.level.play().catch(() => {});
+                // Short delay to avoid clash with pop/color sound
+                setTimeout(() => {
+                    sounds.level.currentTime = 0;
+                    sounds.level.play().catch(() => {});
+                }, 50);
                 runConfetti(70, 60, 0.8);
                 currentLevelIdx = nextIdx;
                 document.getElementById('level-num').innerText = levels[currentLevelIdx].id;
@@ -167,7 +173,11 @@ function initGame() {
                 return;
             }
             if (dir > 0) {
-                sounds.level.play().catch(() => {}); // PLAY LEVEL SOUND ON FORWARD
+                // Short delay to avoid clash with pop/color sound
+                setTimeout(() => {
+                    sounds.level.currentTime = 0;
+                    sounds.level.play().catch(() => {});
+                }, 50);
                 runConfetti(50, 60, 0.8);
             }
             currentLevelIdx = Math.max(0, nextIdx);
