@@ -138,6 +138,10 @@ function initGame() {
                 do { c2 = colors[Math.floor(Math.random() * 4)]; } while (c2 === c1);
                 //sounds.pop.play().catch(() => {});
                 sounds[c1].play().catch(() => {}); 
+                setTimeout(() => {
+                    sounds[c2].level.currentTime = 0;
+                    sounds[c2].level.play().catch(() => {});
+                }, 1000);
                 sounds[c2].play().catch(() => {}); 
             }
             
