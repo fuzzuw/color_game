@@ -1,6 +1,8 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Color Fun App</title>
@@ -69,15 +71,27 @@
         let timer = null;
         let tapCount = 0;
 
-        function initGame() {
-            Object.values(sounds).forEach(s => { s.play().then(() => s.pause()).catch(() => {}); });
-            document.getElementById('start-screen').style.display = 'none';
-            document.getElementById('container').style.display = 'flex';
-            currentLevelIdx = 0;
-            switchCount = 0;
-            document.getElementById('level-num').innerText = "1";
-            startLevel();
-        }
+function initGame() {
+    // 1. Request Fullscreen (Works on most Androids)
+    let elem = document.documentElement;
+    if (elem.requestFullscreen) {
+        elem.requestFullscreen();
+    } else if (elem.webkitRequestFullscreen) { /* Safari/Older Chrome */
+        elem.webkitRequestFullscreen();
+    }
+
+    // 2. Existing sound unlock logic
+    Object.values(sounds).forEach(s => { s.play().then(() => s.pause()).catch(() => {}); });
+    
+    document.getElementById('start-screen').style.display = 'none';
+    document.getElementById('container').style.display = 'flex';
+    
+    currentLevelIdx = 0;
+    switchCount = 0;
+    document.getElementById('level-num').innerText = "1";
+    startLevel();
+}
+
 
         function debugCheck() {
             tapCount++;
