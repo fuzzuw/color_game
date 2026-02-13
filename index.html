@@ -1,0 +1,177 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Color Fun App</title>
+    <!--  -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+    
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: 'Comic Sans MS', sans-serif; background: #222; }
+        #start-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #FFD700; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 100;
+        }
+        #start-button { padding: 25px 50px; font-size: 35px; cursor: pointer; background: white; border: 6px solid #333; border-radius: 60px; box-shadow: 0 8px 0 #999; }
+        #container { display: flex; height: 100vh; width: 100vw; display: none; position: relative; }
+        .half { flex: 1; height: 100%; transition: background-color 0.5s ease-in-out; }
+        #progress-container { position: absolute; top: 0; left: 0; width: 100%; height: 12px; background: rgba(0,0,0,0.1); z-index: 10; }
+        #progress-bar { width: 100%; height: 100%; background: white; transition: width linear; }
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; }
+        .header { display: flex; justify-content: center; padding: 30px; }
+        #level-badge { background: white; padding: 10px 25px; border-radius: 30px; font-size: 24px; font-weight: bold; border: 4px solid #333; pointer-events: auto; }
+        .nav-controls { display: flex; justify-content: space-between; padding: 30px; pointer-events: auto; }
+        .nav-btn { width: 85px; height: 85px; font-size: 40px; border-radius: 50%; background: white; border: 4px solid #333; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 0 #bbb; }
+    </style>
+</head>
+<body>
+    <div id="start-screen">
+        <h1 style="font-size: 50px;">Color Fun!</h1>
+        <button id="start-button" onclick="initGame()">PLAY! 🎮</button>
+    </div>
+
+    <div id="container">
+        <div id="progress-container"><div id="progress-bar"></div></div>
+        <div id="left" class="half"></div>
+        <div id="right" class="half"></div>
+        <div id="ui-layer">
+            <div class="header">
+                <div id="level-badge" onclick="debugCheck()">Level <span id="level-num">1</span></div>
+            </div>
+            <div class="nav-controls">
+                <button class="nav-btn" onclick="manualChange(-1)">⬅️</button>
+                <button class="nav-btn" onclick="manualChange(1)">➡️</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const colors = ['red', 'green', 'blue', 'yellow'];
+        const levels = [
+            { id: 1, interval: 5, switches: 4, same: true },
+            { id: 2, interval: 5, switches: 10, same: false },
+            { id: 3, interval: 4, switches: 10, same: false },
+            { id: 4, interval: 3, switches: 10, same: false },
+            { id: 5, interval: 2, switches: 10, same: false },
+            { id: 6, interval: 1, switches: 10, same: false }
+        ];
+
+        const sounds = {
+            red: new Audio('red.mp3'), green: new Audio('green.mp3'),
+            blue: new Audio('blue.mp3'), yellow: new Audio('yellow.mp3'),
+            win: new Audio('win.mp3'), pop: new Audio('pop.mp3')
+        };
+
+        let currentLevelIdx = 0;
+        let switchCount = 0;
+        let timer = null;
+        let tapCount = 0;
+
+        function initGame() {
+            Object.values(sounds).forEach(s => { s.play().then(() => s.pause()).catch(() => {}); });
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('container').style.display = 'flex';
+            currentLevelIdx = 0;
+            switchCount = 0;
+            document.getElementById('level-num').innerText = "1";
+            startLevel();
+        }
+
+        function debugCheck() {
+            tapCount++;
+            if (tapCount >= 3) {
+                let status = "Audio Status:\n";
+                Object.entries(sounds).forEach(([name, audio]) => {
+                    status += (audio.readyState > 0 ? "✅ " : "❌ ") + name + ".mp3\n";
+                });
+                alert(status);
+                tapCount = 0;
+            }
+            setTimeout(() => { tapCount = 0; }, 2000);
+        }
+
+        function runConfetti(count, spread, y) {
+            if (typeof confetti === 'function') {
+                confetti({ particleCount: count, spread: spread, origin: { y: y } });
+            }
+        }
+
+        function updateColors() {
+            const level = levels[currentLevelIdx];
+            if (switchCount >= level.switches) {
+                autoNextLevel();
+                return;
+            }
+
+            const bar = document.getElementById('progress-bar');
+            bar.style.transition = 'none';
+            bar.style.width = '100%';
+            setTimeout(() => {
+                bar.style.transition = `width ${level.interval}s linear`;
+                bar.style.width = '0%';
+            }, 50);
+
+            let c1, c2;
+            if (level.same) {
+                c1 = colors[switchCount % colors.length];
+                c2 = c1;
+                sounds[c1].play().catch(() => {}); 
+            } else {
+                c1 = colors[Math.floor(Math.random() * 4)];
+                do { c2 = colors[Math.floor(Math.random() * 4)]; } while (c2 === c1);
+                sounds.pop.play().catch(() => {});
+            }
+            
+            document.getElementById('left').style.backgroundColor = c1;
+            document.getElementById('right').style.backgroundColor = c2;
+            switchCount++;
+        }
+
+        function autoNextLevel() {
+            clearInterval(timer);
+            let nextIdx = currentLevelIdx + 1;
+            if (nextIdx >= levels.length) {
+                triggerVictory();
+            } else {
+                runConfetti(70, 60, 0.8);
+                currentLevelIdx = nextIdx;
+                document.getElementById('level-num').innerText = levels[currentLevelIdx].id;
+                switchCount = 0;
+                startLevel();
+            }
+        }
+
+        function manualChange(dir) {
+            clearInterval(timer);
+            let nextIdx = currentLevelIdx + dir;
+            if (nextIdx >= levels.length) {
+                triggerVictory();
+                return;
+            }
+            if (dir > 0) runConfetti(50, 60, 0.8);
+            currentLevelIdx = Math.max(0, nextIdx);
+            switchCount = 0;
+            document.getElementById('level-num').innerText = levels[currentLevelIdx].id;
+            startLevel();
+        }
+
+        function triggerVictory() {
+            clearInterval(timer);
+            runConfetti(300, 100, 0.5);
+            sounds.win.play().catch(() => {});
+            setTimeout(() => {
+                alert("You are a Color Hero! 🎉");
+                document.getElementById('container').style.display = 'none';
+                document.getElementById('start-screen').style.display = 'flex';
+            }, 500);
+        }
+
+        function startLevel() {
+            updateColors();
+            timer = setInterval(updateColors, levels[currentLevelIdx].interval * 1000);
+        }
+    </script>
+</body>
+</html>
