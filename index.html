@@ -52,18 +52,19 @@
     <script>
         const colors = ['red', 'green', 'blue', 'yellow'];
         const levels = [
-            { id: 1, interval: 5, switches: 4, same: true },
-            { id: 2, interval: 5, switches: 10, same: false },
-            { id: 3, interval: 4, switches: 10, same: false },
-            { id: 4, interval: 3, switches: 10, same: false },
+            { id: 1, interval: 3, switches: 4, same: true },
+            { id: 2, interval: 3.5, switches: 10, same: false },
+            { id: 3, interval: 3, switches: 10, same: false },
+            { id: 4, interval: 2.5, switches: 10, same: false },
             { id: 5, interval: 2, switches: 10, same: false },
-            { id: 6, interval: 1, switches: 10, same: false }
+            { id: 6, interval: 1.5, switches: 10, same: false }
         ];
 
         const sounds = {
             red: new Audio('red.mp3'), green: new Audio('green.mp3'),
             blue: new Audio('blue.mp3'), yellow: new Audio('yellow.mp3'),
-            win: new Audio('win.mp3'), pop: new Audio('pop.mp3')
+            win: new Audio('win.mp3'), pop: new Audio('pop.mp3'),
+            level: new Audio('level.mp3')
         };
 
         let currentLevelIdx = 0;
@@ -149,6 +150,7 @@ function initGame() {
             if (nextIdx >= levels.length) {
                 triggerVictory();
             } else {
+                sounds.level.play().catch(() => {});
                 runConfetti(70, 60, 0.8);
                 currentLevelIdx = nextIdx;
                 document.getElementById('level-num').innerText = levels[currentLevelIdx].id;
@@ -164,7 +166,10 @@ function initGame() {
                 triggerVictory();
                 return;
             }
-            if (dir > 0) runConfetti(50, 60, 0.8);
+            if (dir > 0) {
+                sounds.level.play().catch(() => {}); // PLAY LEVEL SOUND ON FORWARD
+                runConfetti(50, 60, 0.8);
+            }
             currentLevelIdx = Math.max(0, nextIdx);
             switchCount = 0;
             document.getElementById('level-num').innerText = levels[currentLevelIdx].id;
